@@ -64,6 +64,7 @@ class SilverstripeUpgrader extends Command
     private function doRectorUpgrade($path, $io) {
         $srcPath = $this->getSrcPath($path);
         $process = new Process([
+            PHP_BINARY,
             'vendor/bin/rector',
             'process',
             $srcPath,
@@ -108,7 +109,8 @@ class SilverstripeUpgrader extends Command
     private array $replace_package_map = [
         'undefinedoffset/sortablegridfield' => 'symbiote/silverstripe-gridfieldextensions',
         'php' => null,
-        'silverstripe/recipe-core' => null
+        'silverstripe/recipe-core' => null,
+        'heyday/silverstripe-responsive-images' => 'wakeworks/silverstripe-responsive-images'
     ];
 
     private array $package_version_constraints = [
@@ -164,7 +166,8 @@ class SilverstripeUpgrader extends Command
                 }
                 // If it does not work, try with new / without constraint
                 $version = $this->package_version_constraints[$package] ?? null;
-                if(!$this->doComposerRequire($path, $package, $version, $isDev)) {
+                $this->removeComposerLockFile($path);
+                if(!$this->doComposerRequire($path, $package, $version, $isDev, quiet: true)) {
                     file_put_contents(
                         $this->getComposerJsonFilePath($path),
                         file_get_contents($backupFilePath)
